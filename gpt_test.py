@@ -1,17 +1,16 @@
 # tests.py
 
-from flask import Flask
-from flask.testing import FlaskClient
-from oop_loan_pmt import Loan
 import pytest
+from flask import template_rendered
+from app import *
 
 
 # Unit tests for Loan class
 class TestLoan:
     def test_calculate_discount_factor(self):
-        loan = Loan(100000, 30, 0.06)
+        loan = Loan(10000, 5, 0.05)
         loan.calculateDiscountFactor()
-        assert loan.getDiscountFactor() == pytest.approx(197.76716486711662, rel=1e-2)
+        assert loan.getDiscountFactor() == pytest.approx(52.9900, rel=1e-3)
 
     def test_calculate_loan_payment(self):
         loan = Loan(100000, 30, 0.06)
@@ -28,57 +27,47 @@ class TestLoan:
 
 
 # Functional tests for Flask routes
-class TestFlaskRoutes:
-    @pytest.fixture
-    def app(self):
-        app = Flask(__name__)
-        app.testing = True
-        return app
-
-    @pytest.fixture
-    def client(self, app):
-        return app.test_client()
-
-    def test_index_route_get_request(self, client):
-        response = client.get("/")
-        assert response.status_code == 200
-
-    def test_mnthly_pmt_route_post_request(self, client):
-        response = client.post(
-            "/",
-            data=dict(
-                loanAmt=100000,
-                lengthOfLoan=30,
-                intRate=0.06,
-            ),
-            follow_redirects=True,
-        )
-        assert response.status_code == 200
 
 
-# Integration tests for Flask app
-class TestFlaskApp:
-    @pytest.fixture
-    def app(self):
-        app = Flask(__name__)
-        app.testing = True
-        return app
+@pytest.fixture
+def client():
+    with app.test_client() as client:
+        yield client
 
-    @pytest.fixture
-    def client(self, app):
-        return app.test_client()
+def test_index_route_get_request(client):
+    response = client.get("/")
+    assert response.status_code == 200
 
-    def test_index_and_mnthly_pmt_routes_integration(self, client):
-        response = client.get("/")
-        assert response.status_code == 200
+def test_mnthly_pmt_route_post_request(client):
+    response = client.post(
+        "/",
+        data=dict(
+            loanAmt=100000,
+            lengthOfLoan=30,
+            intRate=0.06,
+        ),
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
 
-        response = client.post(
-            "/",
-            data=dict(
-                loanAmt=100000,
-                lengthOfLoan=30,
-                intRate=0.06,
-            ),
-            follow_redirects=True,
-        )
-        assert response.status_code == 200
+
+# # Integration tests for Flask app
+
+#     @pytest.fixture
+#     def client(self, app):
+#         return app.test_client()
+
+#     def test_index_and_mnthly_pmt_routes_integration(self, client):
+#         response = client.get("/")
+#         assert response.status_code == 200
+
+#         response = client.post(
+#             "/",
+#             data=dict(
+#                 loanAmt=100000,
+#                 lengthOfLoan=30,
+#                 intRate=0.06,
+#             ),
+#             follow_redirects=True,
+#         )
+#         assert response.status_code == 200
